@@ -1,61 +1,51 @@
-#include "header.h"
 #include "pwd.h"
-#include "tree_io.h"
-#include <stdbool.h>  // bool 타입 사용을 위해
+#include <stdlib.h>
+#include <string.h>
 
+// Stack 함수 구현
 int init_stack(Stack* s) {
-    if (s == NULL) {
-        fprintf(stderr, "Stack Buffer doesn't exist.\n");
-        return -1;
-    }
     s->top = -1;
     return 0;
 }
-
-bool IsFull(Stack* s) {
-    return s->top == MAXB - 1;
-}
-
 bool IsEmpty(Stack* s) {
     return s->top == -1;
 }
-
 int push(Stack* s, const char* dir) {
-    if (IsFull(s)) {
-        fprintf(stderr, "Stack is Full.\n");
-        return -1;
-    }
     s->path[++(s->top)] = strdup(dir);
     return 0;
 }
-
 char* pop(Stack* s) {
-    if (IsEmpty(s)) {
-        return NULL;
-    }
+    if (IsEmpty(s)) return NULL;
     return s->path[(s->top)--];
 }
 
-int get_pwd(DirectoryTree *dTree) {
-    Stack buff;
-    init_stack(&buff);
+// current_path 갱신 로직
+void update_current_path(DirectoryTree *dTree) {
+    Stack stk;
+    init_stack(&stk);
 
-    TreeNode *current = dTree->current;
-
-    // 루트 디렉터리까지 올라갈 때까지 반복
-    while (current->parent != NULL) {
-        push(&buff, current->name);
-        current = current->parent;
+    // 1) current 에서 root 까지 이름 쌓기
+    TreeNode *cur = dTree->current;
+    while (cur->parent) {
+        push(&stk, cur->name);
+        cur = cur->parent;
     }
 
-    printf("/");
-
-    char* name;
-    while ((name = pop(&buff)) != NULL) {
-	    printf("%s/", name);
-	    free(name);
+    // 2) 스택에서 꺼내며 "/" 붙이며 합치기
+    char path[MAX_PATH_LENGTH] = "";
+    if (IsEmpty(&stk)) {
+        // root 디렉토리
+        strcpy(path, "/");
+    } else {
+        char *seg;
+        while ((seg = pop(&stk)) != NULL) {
+            strcat(path, "/");
+            strcat(path, seg);
+            free(seg);
+        }
     }
 
-    printf("\n");
-    return 0;
+    // 3) dTree->current_path 에 복사
+    strncpy(dTree->current_path, path, sizeof(dTree->current_path));
+    dTree->current_path[sizeof(dTree->current_path)-1] = '\0';
 }

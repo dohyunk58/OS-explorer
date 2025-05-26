@@ -1,72 +1,63 @@
-#include "header.h"
+// tree_io.c
 #include "tree_io.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-void save_tree_to_file(DirectoryTree* dTree, const char* filename);
-void load_tree_from_file(DirectoryTree* dTree, const char* filename);
-
+// 내부 헬퍼: static 제거!
 void save_tree_helper(FILE* file, TreeNode* node, int level) {
-    if (!node)
-        return;
+    if (!node) return;
     fprintf(file, "%*s%c %s\n", level * 2, "", node->type, node->name);
-    save_tree_helper(file, node->left, level + 1);
+    save_tree_helper(file, node->left,  level + 1);
     save_tree_helper(file, node->right, level);
-}
-
-void save_tree_to_file(DirectoryTree* dTree, const char* filename) {
-    FILE* file = fopen(filename, "w");
-    if (!file) {
-        perror("fopen");
-        return;
-    }
-    save_tree_helper(file, dTree->root, 0);
-    fclose(file);
 }
 
 TreeNode* load_tree_helper(FILE* file, int level) {
     char line[1024];
-    TreeNode* node = NULL;
+    if (!fgets(line, sizeof(line), file)) return NULL;
 
-    if (fgets(line, sizeof(line), file) == NULL)
-        return NULL;
-
-    int current_level = 0;
-    while (line[current_level] == ' ' && current_level < level * 2)
-        current_level++;
-    if (current_level != level * 2) {
+    // 들여쓰기 레벨 계산
+    int cur_lvl = 0;
+    while (line[cur_lvl] == ' ' && cur_lvl < level * 2) cur_lvl++;
+    if (cur_lvl != level * 2) {
+        // 잘못된 레벨이면 뒤로 파일 포인터 복원
         fseek(file, -strlen(line), SEEK_CUR);
         return NULL;
     }
 
-    node = malloc(sizeof(TreeNode));
-    sscanf(line + current_level, "%c %s\n", &node->type, node->name);
-    node->left = load_tree_helper(file, level + 1);
-    if (node->left != NULL)
-    	node->left->parent = node;
-    node->right = load_tree_helper(file, level);
-    if (node->right != NULL)
-    	node->right->parent = node;
+    // 노드 생성
+    TreeNode* node = malloc(sizeof(TreeNode));
+    sscanf(line + cur_lvl, "%c %s", &node->type, node->name);
 
+    // 자식·형제 로드
+    node->left  = load_tree_helper(file, level + 1);
+    if (node->left)  node->left->parent = node;
+    node->right = load_tree_helper(file, level);
+    if (node->right) node->right->parent = node->parent; // 이전 코드 node->right->parent = node;
     return node;
 }
 
+void save_tree_to_file(DirectoryTree* dTree, const char* filename) {
+    FILE* f = fopen(filename, "w");
+    if (!f) { perror("fopen"); return; }
+    save_tree_helper(f, dTree->root, 0);
+    fclose(f);
+}
+
 void load_tree_from_file(DirectoryTree* dTree, const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        // 파일이 존재하지 않으면 빈 트리 초기화
-        perror("fopen"); // 수정된 부분: 파일이 없을 때의 오류 메시지 출력
-        TreeNode* root = malloc(sizeof(TreeNode)); //빈 트리 초기화
+    FILE* f = fopen(filename, "r");
+    if (!f) {
+        // 파일 없으면 빈 트리 초기화
+        TreeNode* root = malloc(sizeof(TreeNode));
         strcpy(root->name, "/");
-        root->type = 'd';
-        root->left = NULL;
-        root->right = NULL;
-        root->parent = NULL;
-        dTree->root = root;
-        dTree->current = root;
-        strcpy(dTree->current_path, "Team4:");
+        root->type   = 'd';
+        root->left = root->right = root->parent = NULL;
+        dTree->root    = dTree->current = root;
+        strcpy(dTree->current_path, "/");
         return;
     }
-    dTree->root = load_tree_helper(file, 0);
+    dTree->root    = load_tree_helper(f, 0);
     dTree->current = dTree->root;
-    strcpy(dTree->current_path, "Team4:");
-    fclose(file);
+    strcpy(dTree->current_path, "/");
+    fclose(f);
 }
