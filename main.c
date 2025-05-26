@@ -18,12 +18,12 @@ DirectoryTree dTree;
 
 void initialize_directory_tree(DirectoryTree* dTree) {
     TreeNode* root = malloc(sizeof(TreeNode)); // 메모리 할당
-    strcpy(root->name, "/");
+    strcpy(root->name, "");
     root->type = 'd';
     root->left = NULL;
     root->right = NULL;
     root->parent = NULL;
-    strncpy(dTree->root->name, "/", MAX_NAME_LENGTH);
+    //strncpy(dTree->root->name, "/", MAX_NAME_LENGTH);
     dTree->root->type = 'd';
     dTree->root->mode = 755;
     dTree->root->size = 4096;
@@ -94,7 +94,7 @@ int main() {
                 save_tree_to_file(&dTree, SAVE_FILE);
             } else {
                 printf("cat: missing argument\n");
-                printf("사용법: cat <filename>\n")
+                printf("사용법: cat <filename>\n");
             }
         } 
         else if (strcmp(cmd, "cd") == 0) {

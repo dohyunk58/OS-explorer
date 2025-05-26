@@ -51,7 +51,7 @@ void load_tree_from_file(DirectoryTree* dTree, const char* filename) {
         // 파일이 존재하지 않으면 빈 트리 초기화
         perror("fopen"); // 수정된 부분: 파일이 없을 때의 오류 메시지 출력
         TreeNode* root = malloc(sizeof(TreeNode)); //빈 트리 초기화
-        strcpy(root->name, "/");
+        strcpy(root->name, "");
         root->type = 'd';
         root->left = NULL;
         root->right = NULL;
@@ -62,6 +62,9 @@ void load_tree_from_file(DirectoryTree* dTree, const char* filename) {
         return;
     }
     dTree->root = load_tree_helper(file, 0);
+    if (dTree->root && strcmp(dTree->root->name, "/") == 0) {
+        strcpy(dTree->root->name, "");
+    }
     dTree->current = dTree->root;
     strcpy(dTree->current_path, "Team4:");
     fclose(file);
