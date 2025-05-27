@@ -45,7 +45,7 @@ pwd.o: pwd.c pwd.h header.h tree_io.h
 	$(CC) $(CFLAGS) -c $< -o $@
   
 rmdir.o: rmdir.c rmdir.h header.h tree_io.h
-  $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 touch.o: touch.c touch.h header.h
 	$(CC) $(CFLAGS) -c $< -o $@
